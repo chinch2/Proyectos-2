@@ -1,5 +1,5 @@
 import processing.serial.*; 
-
+//Documentación
 Serial myPort;                 // The serial port
 byte[] inBuffer= new byte[5];  // Input Byte from serial port
 int buffersize=1;
