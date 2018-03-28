@@ -1,5 +1,5 @@
 import processing.serial.*; 
-//Documentación
+ 
 Serial myPort;                 // The serial port
 byte[] inBuffer= new byte[5];  // Input Byte from serial port
 int buffersize=1;
@@ -17,7 +17,15 @@ boolean ADC1=false;            // Indica si hay datos por recibir del canal de a
 boolean ADC2=false;            // Indica si hay datos por recibir del canal de adquisición 2
 String[] txtBuffer1 = new String[txtSamples];
 String[] txtBuffer2 = new String[txtSamples];
-
+float xl;
+float yl;
+float xp=0;
+float xp1;
+float yp=0;
+float yp1;
+int aux1;
+int aux2;
+int j=0;
 // Variables de ploteo
 
 int ls = 30;
@@ -46,6 +54,7 @@ void setup(){
   printArray(Serial.list()); 
   myPort = new Serial(this, Serial.list()[0], 115200); 
   myPort.buffer(buffersize);
+  frameRate(500);
  
   // Ploteo
   size(800,500);
@@ -58,7 +67,7 @@ void setup(){
 } 
 
 void draw() { 
-  println("DRAW STAR");
+  //println("DRAW STAR");
   if(!stop){
     if(clear){
       drawGrid();
@@ -68,28 +77,56 @@ void draw() {
       OscCount2 = 0;
       clear=false;
     }
-    if(val1Buffer.size() != 0){
+    /*if(val1Buffer.size() != 0){
+      println("eje x: "+val1Buffer.get(0));
       plot1(val1Buffer.get(0));
       val1Buffer.remove(0);
     }
       
     if(val2Buffer.size() != 0){
+      println("eje y: "+val2Buffer.get(0));
       plot2(val2Buffer.get(0));
       val2Buffer.remove(0);
+    }*/
+    if (val1Buffer.size() != 0 && val2Buffer.size() != 0) {
+        j++;
+        aux1=val1Buffer.get(0);
+        aux2=val2Buffer.get(0);
+        xp = xp + aux1;
+        yp = yp + aux2;
+        val1Buffer.remove(0);
+        val2Buffer.remove(0);
+      if (j == 12){
+      xp1 = xp/12;
+      yp1 = yp/12;
+      xl = map(xp1, 300, 2850, 0, width);
+      yl = map(yp1, 300, 2850, 0, height);
+      drawGrid();
+      val1Buffer.clear();
+      val2Buffer.clear();
+      OscCount1 = 0;
+      OscCount2 = 0;
+      drawAim(xl,yl);
+      xp=0;
+      yp=0;
+      j=0;
+      }
+      
     }
+    
   }
-  println("DRAW END");
+  //println("DRAW END");
 }
  
 void serialEvent(Serial myPort) { 
   // Inicia conteo de tiempo de corrida
-  println("SERIAL STAR");
+  //println("SERIAL STAR");
   // runTime = System.nanoTime();
   
   // Lectura del buffer de entrada
   myPort.readBytes(inBuffer);
   if (inBuffer != null) {
-    println("BUFFER: ");
+    //println("BUFFER: ");
     printArray(inBuffer);
   }
   else{
@@ -104,6 +141,8 @@ void serialEvent(Serial myPort) {
     if(ADC1){
       decodeADC1();
       val1Buffer.append(val1);
+      println("dig1: "+dig1);
+      println("dig2: "+dig2);
       ADC1=false;
     }
     
@@ -111,6 +150,8 @@ void serialEvent(Serial myPort) {
     if(ADC2){
       decodeADC2();
       val2Buffer.append(val2);
+      println("dig3: "+dig3);
+      println("dig4: "+dig4);
       ADC2=false;
     }
   
@@ -130,7 +171,7 @@ void serialEvent(Serial myPort) {
   //  println("ERROR: "+ int(runTime/(sampleTime * 1000)) +" muestras perdidas.");
   //}
 
-  println("SERIAL END: "+ runTime);
+  //println("SERIAL END: "+ runTime);
 }
 
 
@@ -246,8 +287,8 @@ void drawGrid(){
   line(2*ls, 2*ls, 2*ls, height -2*ls); // xlabel
   line(2*ls, height- 2*ls, width - 2*ls, height- 2*ls); // ylabel
   fill(100);
-  text("Escala X: "+ xScale[xSet] + "us", 2*ls, height -ls);
-  text("Escala Y: "+ yScale[ySet] + "mV", 3*ls + textWidth("Escala X: "+ xScale[xSet] + "us") , height -ls);
+  //ext("Escala X: "+ xScale[xSet] + "us", 2*ls, height -ls);
+  //text("Escala Y: "+ yScale[ySet] + "mV", 3*ls + textWidth("Escala X: "+ xScale[xSet] + "us") , height -ls);
   
   xSamples = int(numScale*xScale[xSet]/sampleTime);
   xLength = xLabel/xSamples;
@@ -255,8 +296,13 @@ void drawGrid(){
   yLength= yLabel/ySamples;
 }
 
-void  plot1(int var){
-  stroke(255,255,0);
+/*void  plot1(int var){
+  if(dig1 == true){
+  stroke(0);
+  }
+  else {
+    stroke(255,255,0);
+  }
   if((OscCount1 < xSamples) && (OscCount1 != 0)){
     line(2*ls + (OscCount1-1) * xLength, height -2*ls - preVar1 * yLength, 2*ls + OscCount1 * xLength, height -2*ls - var * yLength);
   }
@@ -268,7 +314,13 @@ void  plot1(int var){
   OscCount1++;
 }
 void  plot2(int var){
-  stroke(48,139,206);
+  if(dig2  == true){
+  stroke(0);
+  }
+  else {
+    stroke(48,139,206);
+  }
+  
   if((OscCount2 < xSamples) && (OscCount2 != 0)){
     line(2*ls + (OscCount2-1) * xLength, height -2*ls - preVar2 * yLength, 2*ls + OscCount2 * xLength, height -2*ls - var * yLength);
   }
@@ -279,6 +331,19 @@ void  plot2(int var){
 
   preVar2 = var;
   OscCount2++;
+}*/
+
+void drawAim(float x, float y){
+  fill(255);
+  if(dig1 == false){
+    fill(255,255,0);
+  }
+  if(dig2  == false){
+    fill(255,0,255);
+  }
+    
+  
+  ellipse(x, y, 20, 20);
 }
 
 void keyPressed(){
