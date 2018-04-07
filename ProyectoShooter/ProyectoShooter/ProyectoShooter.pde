@@ -26,9 +26,13 @@ float yp1;
 int aux1;
 int aux2;
 int j=0;
+int acierto1=0;
+int acierto2=0;
+int acierto3=0;
+int gameOver = 0; // 0 estas jugando. 1 perdiste. 2 ganaste.
 // Variables de ploteo
 
-int ls = 30;
+int ls = 0;
 int numScale = 10;
 float sampleTime=500; // 213.623 us
 float sampleVolt = 0.732421875; // 3000/4096 mV
@@ -49,12 +53,15 @@ boolean stop=false;    // se cambia con ENTER
 boolean dataOK=false;
 IntList val1Buffer = new IntList();
 IntList val2Buffer = new IntList(); 
+Target t1 = new Target(300, 300, 30, 10500, 1);
+Target t2 = new Target(400, 300, 40, 30000, 2);
+Target t3 = new Target(500, 300, 50,20000, 3);
 
 void setup(){
   printArray(Serial.list()); 
   myPort = new Serial(this, Serial.list()[0], 115200); 
   myPort.buffer(buffersize);
-  frameRate(500);
+  frameRate(800);
  
   // Ploteo
   size(800,500);
@@ -62,12 +69,12 @@ void setup(){
   xLabel = width - 4*ls;
   yLabel = height - 4*ls;
   font = createFont("Arial", ls);
-  textFont(font);
+  //textFont(font);
   drawGrid();
 } 
 
-void draw() { 
-  //println("DRAW STAR");
+void draw() {
+  if(gameOver == 0){
   if(!stop){
     if(clear){
       drawGrid();
@@ -77,17 +84,15 @@ void draw() {
       OscCount2 = 0;
       clear=false;
     }
-    /*if(val1Buffer.size() != 0){
+    if(val1Buffer.size() != 0){
       println("eje x: "+val1Buffer.get(0));
-      plot1(val1Buffer.get(0));
       val1Buffer.remove(0);
     }
       
     if(val2Buffer.size() != 0){
       println("eje y: "+val2Buffer.get(0));
-      plot2(val2Buffer.get(0));
       val2Buffer.remove(0);
-    }*/
+    }
     if (val1Buffer.size() != 0 && val2Buffer.size() != 0) {
         j++;
         aux1=val1Buffer.get(0);
@@ -96,17 +101,32 @@ void draw() {
         yp = yp + aux2;
         val1Buffer.remove(0);
         val2Buffer.remove(0);
-      if (j == 12){
-      xp1 = xp/12;
-      yp1 = yp/12;
-      xl = map(xp1, 300, 2850, 0, width);
-      yl = map(yp1, 300, 2850, 0, height);
+      if (j == 25){
+      xp1 = xp/25;
+      yp1 = yp/25;
+      xl = map(xp1, 770, 2300, 0, width);
+      yl = map(yp1, 900, 2611, height, 0);
       drawGrid();
       val1Buffer.clear();
       val2Buffer.clear();
       OscCount1 = 0;
       OscCount2 = 0;
+      if(acierto1 < 3){
+      t1.show();
+      }
+      if(acierto2 < 3){
+      t2.show();
+      }
+      if(acierto3 < 3){
+      t3.show();
+      }
+      if(acierto1 == 3 && acierto2 == 3 && acierto3 == 3){
+        gameOver = 2;
+      }
       drawAim(xl,yl);
+      if(dig2){
+          shield();
+      }
       xp=0;
       yp=0;
       j=0;
@@ -115,7 +135,18 @@ void draw() {
     }
     
   }
-  //println("DRAW END");
+   // Si tengo el gatillo presionado, ejecuto disparar.
+  if(dig1==false){
+    shoot();
+  }
+ }
+ else if(gameOver == 1){
+   background(255, 0, 0);
+ }
+ else if (gameOver == 2){
+   background(255);
+ }
+ 
 }
  
 void serialEvent(Serial myPort) { 
@@ -282,6 +313,7 @@ void drawGrid(){
     stroke(200);
     line(2*ls,height - 2*ls -(i+1)*(yLabel/numScale),2*ls + xLabel,height - 2*ls -(i+1)*(yLabel/numScale));  // Linea vertical
     line(2*ls + (i+1)*(xLabel/numScale),height - 2*ls ,2*ls + (i+1)*(xLabel/numScale),2*ls);  // Linea horizontal
+    ls++;
   }
   stroke(255);
   line(2*ls, 2*ls, 2*ls, height -2*ls); // xlabel
@@ -295,50 +327,12 @@ void drawGrid(){
   ySamples= int(numScale*yScale[ySet]/sampleVolt);
   yLength= yLabel/ySamples;
 }
-
-/*void  plot1(int var){
-  if(dig1 == true){
-  stroke(0);
-  }
-  else {
-    stroke(255,255,0);
-  }
-  if((OscCount1 < xSamples) && (OscCount1 != 0)){
-    line(2*ls + (OscCount1-1) * xLength, height -2*ls - preVar1 * yLength, 2*ls + OscCount1 * xLength, height -2*ls - var * yLength);
-  }
-    if(OscCount1 >= xSamples){
-    clear = true;
-  }
-
-  preVar1 = var;
-  OscCount1++;
-}
-void  plot2(int var){
-  if(dig2  == true){
-  stroke(0);
-  }
-  else {
-    stroke(48,139,206);
-  }
-  
-  if((OscCount2 < xSamples) && (OscCount2 != 0)){
-    line(2*ls + (OscCount2-1) * xLength, height -2*ls - preVar2 * yLength, 2*ls + OscCount2 * xLength, height -2*ls - var * yLength);
-  }
-  
-  if(OscCount2 >= xSamples){
-    clear = true;
-  }
-
-  preVar2 = var;
-  OscCount2++;
-}*/
-
 void drawAim(float x, float y){
   fill(255);
   if(dig1 == false){
     fill(255,255,0);
   }
-  if(dig2  == false){
+  if(dig2){
     fill(255,0,255);
   }
     
@@ -346,28 +340,91 @@ void drawAim(float x, float y){
   ellipse(x, y, 20, 20);
 }
 
-void keyPressed(){
-    if(key == CODED){
-      switch(keyCode){
-        case RIGHT:
-          if(xSet!=xScale.length-1)
-            xSet++;
-          break;
-        case LEFT:
-          if(xSet!=0)
-            xSet--;
-          break;
-        case UP:
-          if(ySet!=yScale.length-1)
-            ySet++;
-          break;
-        case DOWN:
-          if(ySet!=0)
-            ySet--;
-          break;
-      }
-      clear = true;
+class Target{
+  int x, y, radius, attackInterval, targetColor;
+  int preAttackInterval = 1000;
+  int attackCounter = 0;
+  Target(int xPos, int yPos, int rad, int interval, int tColor){
+    x = xPos;
+    y = yPos;
+    radius = rad;
+    attackInterval = interval;
+    targetColor = tColor;
+  }
+  
+  void show(){
+    if(preAttackCheck() == true){ // Si estamos en el momento previo al ataque (cambio de color).
+      fill(255, 0, 0);
     }
-    if(key == 32)
-      stop = !stop;  
+    else if (attackCheck() == true){ // Si estamos en el momento del ataque.
+      fill(0);
+      attack();
+    }
+    else{
+      if(targetColor == 1){
+        fill(255, 255, 0);
+      }
+      else if (targetColor == 2){
+        fill(255, 0, 255);
+      }
+      else{
+        fill(255);
+      }
+    }
+    ellipse(x, y, radius, radius);
+  }
+  
+  boolean preAttackCheck(){ // Vemos si estamos 30% antes del tiempo de intervalo para alertar al usuario que viene el ataque cambiando el color del objeto.
+    if(millis() >= (((attackCounter + 1) * attackInterval) - preAttackInterval) && millis() < ((attackCounter + 1) * attackInterval)){
+      return true;
+    }
+    return false;
+  }
+  
+  boolean attackCheck(){ // Vemos si estamos en el tiempo de intervalo para atacar.
+    if(millis() >= (attackCounter + 1) * attackInterval){
+      attackCounter++;
+      return true;
+    }
+    return false;
+  }
+  
+  void attack(){ // Funcion de atacar de cada objetivo, si el digital 2 esta apagado en este momento, perdemos.
+    if(!dig2){
+      gameOver = 1;
+    }
+  }
+}
+
+void shoot(){
+  // Comparo si la mira esta dentro del objetivo. Esto se hace restando las posiciones de los centros. 
+  // Si AMBAS son menores al radio del objetivo quiere decir que la mira esta dentro.
+  if(abs(xl - t1.x) < t1.radius && abs(yl - t1.y) < t1.radius){
+    // Si estoy dentro del objetivo, cambio su posicion en x y y a un nuevo valor aleatorio.
+    // Se hace de t1.radius a width - t1.radius para que siempre este la elipse en la pantalla.
+    // ejemplo: si saliera la posicion 0,0, solo se veria un cuarto del circulo, ya que lo demas estaria en valores negativos de la pantalla.
+    t1.x = (int) random(t1.radius, width - t1.radius);
+    t1.y = (int) random(t1.radius, height - t1.radius);
+    acierto1++;
+  }
+  if(abs(xl - t2.x) < t2.radius && abs(yl - t2.y) < t2.radius){
+    // Si estoy dentro del objetivo, cambio su posicion en x y y a un nuevo valor aleatorio.
+    // Se hace de t1.radius a width - t1.radius para que siempre este la elipse en la pantalla.
+    // ejemplo: si saliera la posicion 0,0, solo se veria un cuarto del circulo, ya que lo demas estaria en valores negativos de la pantalla.
+    t2.x = (int) random(t2.radius, width - t2.radius);
+    t2.y = (int) random(t2.radius, height - t2.radius);
+    acierto2++;
+  }
+  if(abs(xl - t3.x) < t3.radius && abs(yl - t3.y) < t3.radius){
+    // Si estoy dentro del objetivo, cambio su posicion en x y y a un nuevo valor aleatorio.
+    // Se hace de t1.radius a width - t1.radius para que siempre este la elipse en la pantalla.
+    // ejemplo: si saliera la posicion 0,0, solo se veria un cuarto del circulo, ya que lo demas estaria en valores negativos de la pantalla.
+    t3.x = (int) random(t3.radius, width - t3.radius);
+    t3.y = (int) random(t3.radius, height - t3.radius);
+    acierto3++;
+  }
+}
+void shield(){
+  fill(255,255,255,50);
+  rect(0,0,800,500);
 }
