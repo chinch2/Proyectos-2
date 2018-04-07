@@ -29,6 +29,10 @@ int j=0;
 int acierto1=0;
 int acierto2=0;
 int acierto3=0;
+int HP=5;
+int SP=5;
+int vida=2;
+int escudo=2;
 int gameOver = 0; // 0 estas jugando. 1 perdiste. 2 ganaste.
 // Variables de ploteo
 
@@ -56,7 +60,8 @@ IntList val2Buffer = new IntList();
 Target t1 = new Target(300, 300, 30, 10500, 1);
 Target t2 = new Target(400, 300, 40, 30000, 2);
 Target t3 = new Target(500, 300, 50,20000, 3);
-
+Bottle b1 = new Bottle(300, 100, 40, 40, 1);
+Bottle b2 = new Bottle(100, 100, 40, 40, 2);
 void setup(){
   printArray(Serial.list()); 
   myPort = new Serial(this, Serial.list()[0], 115200); 
@@ -104,9 +109,13 @@ void draw() {
       if (j == 25){
       xp1 = xp/25;
       yp1 = yp/25;
-      xl = map(xp1, 770, 2300, 0, width);
+      xl = map(xp1, 3, 24, 0, width);//770 2300
       yl = map(yp1, 900, 2611, height, 0);
       drawGrid();
+      healthBar();
+      if(SP>0){
+      shieldBar();
+      }
       val1Buffer.clear();
       val2Buffer.clear();
       OscCount1 = 0;
@@ -120,11 +129,17 @@ void draw() {
       if(acierto3 < 3){
       t3.show();
       }
+      if(vida > 0){
+        b1.show();
+      }
+      if(escudo > 0){
+        b2.show();
+      }
       if(acierto1 == 3 && acierto2 == 3 && acierto3 == 3){
         gameOver = 2;
       }
       drawAim(xl,yl);
-      if(dig2){
+      if(dig2 == true && SP>0){
           shield();
       }
       xp=0;
@@ -145,7 +160,7 @@ void draw() {
    text("YOU LOSE.", 400, 250);
  }
  else if (gameOver == 2){
-   background(255);
+   background(0, 255, 0);
    text("YOU WIN.", 400, 250);
  }
  
@@ -392,9 +407,36 @@ class Target{
   }
   
   void attack(){ // Funcion de atacar de cada objetivo, si el digital 2 esta apagado en este momento, perdemos.
-    if(!dig2){
+    if(dig2 == true && SP>0){
+      SP--;
+    }
+    else {
+      HP--;
+    }
+    if(HP==0){
       gameOver = 1;
     }
+    
+  }
+}
+class Bottle{
+  int x, y, ancho, largo, bottleColor;
+  Bottle(int xPos, int yPos, int anch, int larg, int bColor){
+    x = xPos;
+    y = yPos;
+    ancho = anch;
+    largo= larg;
+    bottleColor = bColor;
+  }
+  
+  void show(){
+      if(bottleColor == 1){
+        fill(0, 255, 0);
+      }
+      else if (bottleColor == 2){
+        fill(255, 255, 255,50);
+      }
+    rect(x, y, ancho, largo);
   }
 }
 
@@ -425,8 +467,34 @@ void shoot(){
     t3.y = (int) random(t3.radius, height - t3.radius);
     acierto3++;
   }
+  if(abs(xl - b1.x) < b1.ancho && abs(yl - b1.y) < b1.largo){
+    // Si estoy dentro del objetivo, cambio su posicion en x y y a un nuevo valor aleatorio.
+    // Se hace de t1.radius a width - t1.radius para que siempre este la elipse en la pantalla.
+    // ejemplo: si saliera la posicion 0,0, solo se veria un cuarto del circulo, ya que lo demas estaria en valores negativos de la pantalla.
+    b1.x = (int) random(b1.ancho, width - b1.ancho);
+    b1.y = (int) random(b1.largo, height - b1.largo);
+    HP++;
+    vida--;
+  }
+  if(abs(xl - b2.x) < b2.ancho && abs(yl - b2.y) < b2.largo){
+    // Si estoy dentro del objetivo, cambio su posicion en x y y a un nuevo valor aleatorio.
+    // Se hace de t1.radius a width - t1.radius para que siempre este la elipse en la pantalla.
+    // ejemplo: si saliera la posicion 0,0, solo se veria un cuarto del circulo, ya que lo demas estaria en valores negativos de la pantalla.
+    b2.x = (int) random(b2.ancho, width - b2.ancho);
+    b2.y = (int) random(b2.largo, height - b2.largo);
+    SP++;
+    escudo--;
+  }
 }
 void shield(){
   fill(255,255,255,50);
   rect(0,0,800,500);
+}
+void healthBar(){
+  fill(0,255,0);
+  rect(0,0,50*HP,20);
+}
+void shieldBar(){
+  fill(255,255,255,50);
+  rect(400,0,50*SP,20);
 }
