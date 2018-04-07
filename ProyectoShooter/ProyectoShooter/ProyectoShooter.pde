@@ -142,9 +142,11 @@ void draw() {
  }
  else if(gameOver == 1){
    background(255, 0, 0);
+   text("YOU LOSE.", 400, 250);
  }
  else if (gameOver == 2){
    background(255);
+   text("YOU WIN.", 400, 250);
  }
  
 }
@@ -319,7 +321,7 @@ void drawGrid(){
   line(2*ls, 2*ls, 2*ls, height -2*ls); // xlabel
   line(2*ls, height- 2*ls, width - 2*ls, height- 2*ls); // ylabel
   fill(100);
-  //ext("Escala X: "+ xScale[xSet] + "us", 2*ls, height -ls);
+  //text("Escala X: "+ xScale[xSet] + "us", 2*ls, height -ls);
   //text("Escala Y: "+ yScale[ySet] + "mV", 3*ls + textWidth("Escala X: "+ xScale[xSet] + "us") , height -ls);
   
   xSamples = int(numScale*xScale[xSet]/sampleTime);
