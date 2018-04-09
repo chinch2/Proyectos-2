@@ -109,8 +109,8 @@ void draw() {
       if (j == 25){
       xp1 = xp/25;
       yp1 = yp/25;
-      xl = map(xp1, 3, 24, 0, width);//770 2300
-      yl = map(yp1, 900, 2611, height, 0);
+      xl = map(xp1, 490, 2160, 0, width);//770 2300
+      yl = map(yp1, 879, 2490, height, 0);
       drawGrid();
       healthBar();
       if(SP>0){
@@ -135,7 +135,7 @@ void draw() {
       if(escudo > 0){
         b2.show();
       }
-      if(acierto1 == 3 && acierto2 == 3 && acierto3 == 3){
+      if(acierto1 >= 3 && acierto2 >= 3 && acierto3 >= 3){
         gameOver = 2;
       }
       drawAim(xl,yl);
